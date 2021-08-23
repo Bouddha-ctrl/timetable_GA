@@ -159,20 +159,18 @@ h = generate_population(pop_size,list(dic.keys()))
 ###############################
 ############################### Contraint de prof-module
 
-def contraint_prof_module(individu):
-    
-
+def contraint_prof_module(individu): # [idF,lecturer , room , timeset], [dicL ,dicR ,  dicD]
     
     idProf = individu[1]
     prof = dicL[idProf]
 
-    id_NTFG = dic[individu[0]]
-    module = id_NTFG[2]
+    fixe = dic[individu[0]]
+    module = fixe.module
     verification = 1
-    #### qui viole la contrainte
-    if str(module) in prof[1]:
+    
+    if module in prof.idmodule:
         verification = 0
-    #return "le prof est : ",prof," le module est : ",module," le poids est : ",verification
+
     return verification
     
 ############################# Inserer dans une dataframe les genomes avec leurs evaluations
@@ -189,18 +187,19 @@ for i in range(0,len(h)):
         eval_population = eval_population + contraint_prof_module(h[i][j])
     contraint_prof_module_population = contraint_prof_module_population.append({'Population':h[i],'id_Population':i ,'Evaluation_Population':eval_population}, ignore_index=True)
 #contraint_prof_module_liste.to_excel("Contraint_Prof_Module.xlsx")
-contraint_prof_module_population.to_excel("Contraint_Prof_Module_ParPopulation.xlsx")
+contraint_prof_module_population.to_excel(path+"Contraint\\Contraint_Prof_Module_ParPopulation.xlsx")
 
 #############################
 #############################
 ############################# Contraint de capacité-groupe
-def contraint_capaciteRoom_typesRoom(individu):  
+def contraint_capaciteRoom_typesRoom(individu):  # [idF,lecturer , room , timeset], [dicL ,dicR ,  dicD]
     id_room = individu[2]
-    id_NTFG = dic[individu[0]]
-    individu_room_capacite = id_NTFG[5] 
-    room_capacite = dicR[id_room][1]  
-    individu_room_types =  id_NTFG[3]
-    room_types = dicR[id_room][2]               
+    room_capacite = dicR[id_room].capacity
+    room_types = dicR[id_room].idType    
+
+    fixe = dic[individu[0]]
+    individu_room_capacite = fixe.nb
+    individu_room_types =  fixe.type
     verification = 1    #### qui viole la contrainte
     if individu_room_capacite <= room_capacite and str(individu_room_types) == str(room_types):
         verification = 0
