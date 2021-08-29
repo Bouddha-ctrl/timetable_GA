@@ -1,6 +1,6 @@
 import random as rd
 import pandas as pd
-rd.seed(10)
+rd.seed(11)
 path= "C:\\Users\\buddha\\Desktop\\calendar_proble_solving\\"
 ##classes
 
@@ -240,6 +240,7 @@ def contraint_room_temps(indv1, indv2): # [idF,lecturer , room , timeset], [dicL
 ## functions
 
 def fitness(genome : Genome):   # [idF,lecturer , room , timeset], [dicL ,dicR ,  dicD]
+    #print(genome)
     Tweight = 0
     size = len(genome)
 
@@ -255,18 +256,92 @@ def fitness(genome : Genome):   # [idF,lecturer , room , timeset], [dicL ,dicR ,
         Tweight += weight
     return Tweight
 
-def selection_pair(popEval):
-    return rd.choices(population=popEval,weights=[genome[1] for genome in popEval],k=2)
+def selection_roulette(popEval, num_parent=2) : #roulette
+    maxFitness = max( list(zip(*popEval))[1] )
+    return rd.sample(population=popEval,counts=[maxFitness*2 - genome[1] for genome in popEval],k=num_parent)
 
-def evolution(fitness_funct, pop_size=2):
+def selection_random(popEval, num_parent=2):
+
+    return rd.sample(population=popEval,k=num_parent)
+
+def single_point_crossover(genome1 :Genome,genome2 :Genome) -> [Genome,Genome]:
+    if len(genome1) != len(genome2) :
+        raise ValueError("G1 and G2 not the same lenght")
+
+    if len(genome1) < 2: 
+        return genome2 ,genome1
+
+    p = rd.randrange(1,len(genome1))
+    
+    return genome1[0:p] + genome2[p:] , genome2[0:p] + genome1[p:] 
+
+def all_mutation(genome : Genome,number_of_mutation :int=1, prob : float=0.5) -> Genome:
+    for _ in range(number_of_mutation):
+        index = rd.randrange(len(genome))
+        if rd.random() > prob:
+            idL = rd.randrange(lecturerRange)
+            idR = rd.randrange(roomRange)
+            idD = rd.randrange(dayRange)
+            genome[index][1:] = [idL,idR,idD] 
+    return genome
+
+def one_mutation(genome : Genome,number_of_mutation :int=1, prob : float=0.7) -> Genome:
+    for _ in range(number_of_mutation):
+        index = rd.randrange(len(genome))
+
+        if rd.random() <= prob:
+            columnIndex = rd.randrange(1,4)
+            if columnIndex == 1:
+                idL = rd.randrange(lecturerRange)
+                genome[index][columnIndex] = idL
+
+            elif columnIndex==2:
+                idR = rd.randrange(roomRange)
+                genome[index][columnIndex] = idR
+            elif columnIndex==3:
+                idD = rd.randrange(dayRange)
+                genome[index][columnIndex] = idD
+            else : print("error switch")
+
+    return genome
+
+def evolution(fitness_funct, selection_pair, crossover, mutation, generation_limit :int ,pop_size :int ):
     pop = generate_population(pop_size,list(dic.keys()))
-    popEval = []
 
-    for i in range(pop_size):
-        popEval.append( [pop[i],fitness_funct(pop[i])] )
+    for i in range(generation_limit):
 
-    popEval = sorted(popEval,key=lambda genome:genome[1])
-    for i in popEval:
-        print(i[1])
-evolution(fitness_funct= fitness)
+        popEval = []
+        for k in range(pop_size):
+            popEval.append( [pop[k],fitness_funct(pop[k])] )
+        popEval = sorted(popEval,key=lambda genome:genome[1])
+
+        print("gen :",i," liste:",list(zip(*popEval))[1])
+
+        next_generation = [popEval[0][0],popEval[1][0]]
+        print("before : ")
+        print(popEval[0][0])
+        print("yes",fitness_funct(popEval[0][0]))
+
+        for j in range(pop_size//2-1):
+
+            genomeEval1, genomeEval2 = selection_pair(popEval)
+            genome1, genome2 = crossover(genomeEval1[0], genomeEval2[0])
+        
+            genome1 = mutation(genome1)
+            genome2 = mutation(genome2)
+            next_generation += [genome1,genome2]  
+        
+        if popEval[0][0] in next_generation:
+            print("yes")
+            print(popEval[0][0])
+            print("yes",fitness_funct(popEval[0][0]))
+        else: print("no")
+        pop = next_generation
+        
+evolution(fitness_funct= fitness,
+            selection_pair = selection_random,
+            crossover= single_point_crossover,
+            mutation= all_mutation,
+            generation_limit = 2,
+            pop_size=10)
 
