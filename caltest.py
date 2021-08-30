@@ -282,7 +282,7 @@ def all_mutation(genome : Genome,number_of_mutation :int=1, prob : float=0.5) ->
             idL = rd.randrange(lecturerRange)
             idR = rd.randrange(roomRange)
             idD = rd.randrange(dayRange)
-            genome[index][1:] = [idL,idR,idD] 
+            genome[index] = [index,idL,idR,idD] 
     return genome
 
 def one_mutation(genome : Genome,number_of_mutation :int=1, prob : float=0.7) -> Genome:
@@ -293,14 +293,14 @@ def one_mutation(genome : Genome,number_of_mutation :int=1, prob : float=0.7) ->
             columnIndex = rd.randrange(1,4)
             if columnIndex == 1:
                 idL = rd.randrange(lecturerRange)
-                genome[index][columnIndex] = idL
+                genome[index] = [index,idL,genome[index][2],genome[index][3]] 
 
             elif columnIndex==2:
                 idR = rd.randrange(roomRange)
-                genome[index][columnIndex] = idR
+                genome[index] = [index,genome[index][1],idR,genome[index][3]] 
             elif columnIndex==3:
                 idD = rd.randrange(dayRange)
-                genome[index][columnIndex] = idD
+                genome[index] = [index,genome[index][1],genome[index][2],idD] 
             else : print("error switch")
 
     return genome
@@ -315,13 +315,11 @@ def evolution(fitness_funct, selection_pair, crossover, mutation, generation_lim
             popEval.append( [pop[k],fitness_funct(pop[k])] )
         popEval = sorted(popEval,key=lambda genome:genome[1])
 
-        print("gen :",i," liste:",list(zip(*popEval))[1])
+        print("gen :",i," liste:",list(zip(*popEval))[1][:10])
 
         next_generation = [popEval[0][0],popEval[1][0]]
-        print("before : ")
-        print(popEval[0][0])
-        print("yes",fitness_funct(popEval[0][0]))
-
+       
+       
         for j in range(pop_size//2-1):
 
             genomeEval1, genomeEval2 = selection_pair(popEval)
@@ -331,17 +329,12 @@ def evolution(fitness_funct, selection_pair, crossover, mutation, generation_lim
             genome2 = mutation(genome2)
             next_generation += [genome1,genome2]  
         
-        if popEval[0][0] in next_generation:
-            print("yes")
-            print(popEval[0][0])
-            print("yes",fitness_funct(popEval[0][0]))
-        else: print("no")
         pop = next_generation
         
 evolution(fitness_funct= fitness,
-            selection_pair = selection_random,
+            selection_pair = selection_roulette,
             crossover= single_point_crossover,
             mutation= all_mutation,
-            generation_limit = 2,
-            pop_size=10)
+            generation_limit = 500,
+            pop_size=100)
 
